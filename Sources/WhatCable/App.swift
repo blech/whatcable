@@ -34,6 +34,12 @@ struct WhatCableApp: App {
                     }
                     .keyboardShortcut(",", modifiers: .command)
                 }
+                CommandGroup(after: .toolbar) {
+                    Button("Refresh") {
+                        delegate.menuRefresh()
+                    }
+                    .keyboardShortcut("r", modifiers: .command)
+                }
             }
     }
 }
@@ -41,6 +47,7 @@ struct WhatCableApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSWindowDelegate {
     static let refreshSignal = RefreshSignal()
+    private(set) static var shared: AppDelegate!
 
     // Menu bar mode
     private var statusItem: NSStatusItem?
@@ -49,10 +56,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
 
     // Window mode
     private var window: NSWindow?
+    private var settingsWindow: NSWindow?
 
     private var cancellables: Set<AnyCancellable> = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        Self.shared = self
+        NSWindow.allowsAutomaticWindowTabbing = false
+
         // Override the process name so the About panel and menus use the
         // app name even though the SwiftPM executable name might differ.
         ProcessInfo.processInfo.setValue(AppInfo.name, forKey: "processName")
@@ -207,7 +218,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         popover?.behavior = isPinned ? .applicationDefined : .transient
     }
 
-    @objc private func menuRefresh() {
+    @objc func menuRefresh() {
         Self.refreshSignal.bump()
     }
 
@@ -253,16 +264,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         ])
     }
 
-    @objc private func menuCheckUpdates() {
+    @objc func menuCheckUpdates() {
         UpdateChecker.shared.check(silent: false)
     }
 
-    @objc private func menuHelp() {
+    @objc func menuHelp() {
         NSWorkspace.shared.open(AppInfo.helpURL)
     }
 
     @objc private func menuQuit() {
         NSApp.terminate(nil)
+    }
+
+    // MARK: - NSWindowDelegate
+
+    func windowWillClose(_ notification: Notification) {
+        if let win = notification.object as? NSWindow, win === settingsWindow {
+            settingsWindow = nil
+        }
     }
 
     // MARK: - NSPopoverDelegate

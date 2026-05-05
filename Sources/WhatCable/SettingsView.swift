@@ -26,12 +26,14 @@ struct SettingsView: View {
 
     private func header(dismiss: @escaping () -> Void) -> some View {
         HStack {
-            Image(systemName: "gearshape")
-                .font(.title2)
-            Text("Settings").font(.headline)
+            Text("Settings")
+                .font(.headline)
             Spacer()
-            Button("Done", action: dismiss)
-                .keyboardShortcut(.defaultAction)
+            Button("Done") {
+                dismiss()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.small)
         }
         .padding(12)
     }
@@ -63,11 +65,11 @@ struct SettingsForm: View {
 
     @ViewBuilder
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(title.uppercased())
-                .font(.caption2)
+                .font(.caption2).bold()
                 .foregroundStyle(.secondary)
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 content()
             }
             .toggleStyle(.switch)
